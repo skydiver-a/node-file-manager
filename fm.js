@@ -1,13 +1,35 @@
-import { argv, stdout } from 'node:process';
+import { argv, stdout } from 'process';
+import { dirname } from 'path';
+import { fileURLToPath } from 'url';
+import { mkdir, access } from 'fs';
 
+const __dirname = dirname(fileURLToPath(import.meta.url));
 class FileManager {
   constructor(username) {
     process.on('exit', () => this.exitMessage());
     this.username = username;
+    this.pathBase = __dirname + '/' + this.makeDirectory(username);
   }
 
   init() {
-    stdout.write(`Welcome to the File Manager, ${this.username}!\n`)
+    stdout.write(`Welcome to the File Manager, ${this.username}!\n`);
+
+    this.pathMessage(this.pathBase);
+  }
+
+  makeDirectory(dir) {
+    access(dir, (error) => {
+      if (error) {
+        mkdir(dir, (error) => {
+          if (error) throw error;
+        });
+      }
+    });
+    return `${dir}`;
+  }
+
+  pathMessage(path) {
+    stdout.write(`You are currently in ${path}\n`);
   }
 
   exitMessage() {
