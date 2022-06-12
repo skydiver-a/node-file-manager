@@ -1,5 +1,5 @@
 import { argv, stdin, stdout, exit } from 'process';
-import { dirname } from 'path';
+import { dirname, resolve } from 'path';
 import { fileURLToPath } from 'url';
 import { mkdir, access } from 'fs';
 import { createInterface } from 'readline';
@@ -14,6 +14,7 @@ class FileManager {
   constructor(username) {
     process.on('exit', () => this.exitMessage(username));
     this.username = username;
+    this.path = '';
     this.pathBase = __dirname + '/' + this.makeDirectory(username);
     this.readLines = readLines.on('line', (line) => this.readCommandLine(line));
   }
@@ -22,11 +23,13 @@ class FileManager {
     stdout.write(`Welcome to the File Manager, ${this.username}!\n`);
 
     this.pathMessage(this.pathBase);
+    this.path = this.pathBase;
   }
 
   readCommandLine(line) {
     switch (line.split(' ')[0]) {
       case ('up'):
+        this.up();
         break;
       case ('cd'):
         break;
@@ -56,8 +59,17 @@ class FileManager {
         this.exit();
         break;
       default:
-        stdout.write('Invalid input. Please try again.');
+        stdout.write('Invalid input. Please try again.\n');
         break;
+    }
+  }
+
+  up() {
+    if (this.path !== this.pathBase) {
+      this.path = resolve(this.path, '..');
+      this.pathMessage(this.path);
+    } else {
+      stdout.write('You are in the root directory. Please try another command.\n');
     }
   }
 
@@ -91,7 +103,7 @@ argv.slice(2).forEach(item => {
         const fm = new FileManager(item.slice(11, item.length));
         fm.init();
       } else {
-        stdout.write('Please enter a username.')
+        stdout.write('Please enter a username: ')
         exit();
       }
     });
