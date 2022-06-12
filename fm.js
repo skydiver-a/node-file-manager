@@ -1,7 +1,7 @@
-import { argv, stdin, stdout, exit } from 'process';
-import { dirname, resolve, isAbsolute } from 'path';
+import { argv, exit, stdin, stdout } from 'process';
+import { basename, dirname, extname, isAbsolute, resolve } from 'path';
 import { fileURLToPath } from 'url';
-import { mkdir, access } from 'fs';
+import { access, mkdir, readdir, stat } from 'fs';
 import { lstat } from 'node:fs/promises';
 import { createInterface } from 'readline';
 
@@ -36,6 +36,7 @@ class FileManager {
         this.cd(line.split(' ')[1]);
         break;
       case ('ls'):
+        this.ls();
         break;
       case ('cat'):
         break;
@@ -105,6 +106,31 @@ class FileManager {
       // update path to current directory
       this.path = pathToDir;
       this.pathMessage(pathToDir);
+    });
+  }
+
+  ls() {
+    readdir(this.path, { withFileTypes: true }, (error, files) => {
+      if (error) throw error;
+      if (!files.length) {
+        stdout.write(`Directory ${this.path} are empty.\n`);
+        this.pathMessage(this.path);
+        return;
+      } else {
+        files.forEach(item => {
+          if (item.isDirectory()) {
+            stdout.write(`${item.name}\n`);
+          }
+          if (item.isFile()) {
+            const extension = extname(item.name);
+            const fileName = basename(item.name, extension);
+            stat(resolve(this.path, item.name), (error, element) => {
+              if (error) throw error;
+              stdout.write(`${fileName}.${extension.slice(1)} - ${element.size}b\n`);
+            });
+          }
+        });
+      }
     });
   }
 
