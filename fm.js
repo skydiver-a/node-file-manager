@@ -1,7 +1,8 @@
 import { argv, stdin, stdout, exit } from 'process';
-import { dirname, resolve } from 'path';
+import { dirname, resolve, isAbsolute } from 'path';
 import { fileURLToPath } from 'url';
 import { mkdir, access } from 'fs';
+import { lstat } from 'node:fs/promises';
 import { createInterface } from 'readline';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -32,6 +33,7 @@ class FileManager {
         this.up();
         break;
       case ('cd'):
+        this.cd(line.split(' ')[1]);
         break;
       case ('ls'):
         break;
@@ -71,6 +73,39 @@ class FileManager {
     } else {
       stdout.write('You are in the root directory. Please try another command.\n');
     }
+  }
+
+  cd(pathToDir) {
+    // if path is absolute
+    if (isAbsolute(pathToDir)) {
+      // and contains path to the base directory
+      if (pathToDir.includes(this.pathBase)) {
+        this.isExist(pathToDIr);
+      } else {
+        stdout.write('Invalid directory path. Please try again.\n');
+      }
+    } else {
+      const pathArray = pathToDir.split('/');
+      let createPath = this.path;
+      pathArray.forEach(folder => {
+        createPath += '/' + folder;
+      });
+      this.isExist(createPath);
+    }
+  }
+
+  isExist(pathToDir) {
+    access(pathToDir, (error) => {
+      if (error) {
+        stdout.write(`No such directory: ${pathToDir},\n`);
+        stdout.write(`make directory first.\n`);
+        this.pathMessage(this.path);
+        return;
+      }
+      // update path to current directory
+      this.path = pathToDir;
+      this.pathMessage(pathToDir);
+    });
   }
 
   exit() {
