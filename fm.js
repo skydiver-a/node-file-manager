@@ -1,7 +1,7 @@
 import { argv, exit, stdin, stdout } from 'process';
 import { basename, dirname, extname, isAbsolute, resolve } from 'path';
 import { fileURLToPath } from 'url';
-import { access, mkdir, readdir, stat } from 'fs';
+import { access, createReadStream, mkdir, readdir, stat } from 'fs';
 import { lstat } from 'node:fs/promises';
 import { createInterface } from 'readline';
 
@@ -39,6 +39,7 @@ class FileManager {
         this.ls();
         break;
       case ('cat'):
+        this.cat(line.split(' ')[1]);
         break;
       case ('add'):
         break;
@@ -132,6 +133,27 @@ class FileManager {
         });
       }
     });
+  }
+
+  cat(pathToFile) {
+    const absPathToFile = this.path + '/' + pathToFile;
+    access(absPathToFile, (error) => {
+      if (error) throw error;
+    });
+    const readStream = createReadStream(absPathToFile, { encoding: 'utf8' });
+    readStream.on('data', (chunk) => {
+      stdout.write(chunk);
+      readStream.destroy();
+      stdout.write('\n');
+    }).on('end', () => {
+        // not been called since we are destroying the stream
+        // the first time 'data' event is received
+        stdout.write('\n');
+    })
+    .on('close', (error) => {
+        if (error) throw error;
+    });
+    return;
   }
 
   exit() {
