@@ -2,7 +2,8 @@ import { argv, exit, stdin, stdout } from 'process';
 import { basename, dirname, extname, isAbsolute, resolve } from 'path';
 import { fileURLToPath } from 'url';
 import { access, copyFile, createReadStream,
-  mkdir, rename, readdir, stat, writeFile } from 'node:fs';
+  mkdir, rename, readdir, stat, writeFile,
+  unlink } from 'node:fs';
 import { lstat } from 'node:fs/promises';
 import { createInterface } from 'readline';
 
@@ -205,14 +206,14 @@ class FileManager {
     // reading source directory
     readdir(this.path, {withFileTypes: true}, (err) => {
       if (err) throw err;
-      // coping file from source to target
-      copyFile(sourceFile, targetFile, (err) => {
-        if (err) throw err;
-        this.path = targetFolder;
-        this.pathMessage(this.path);
-        return;
-      });
     });
+    // coping file from source to target
+    copyFile(sourceFile, targetFile, (err) => {
+      if (err) throw err;
+      this.path = targetFolder;
+    });
+    this.pathMessage(this.path);
+    return;
   }
 
   mv(pathToFile, pathToNewDir) {
@@ -224,7 +225,21 @@ class FileManager {
   }
 
   rm(pathToFile) {
-
+    const absPathToFile = this.path + '/' + pathToFile;
+    // if source folder doesn't exist
+    readdir(this.path, {withFileTypes: true}, (err) => {
+      if (err) throw err;
+    });
+    // if source file doesn't exist
+    access(absPathToFile, (err) => {
+      if (err) throw err;
+    });
+    // delete file
+    unlink(absPathToFile, (err) => {
+      if (err) throw err;
+    });
+    this.pathMessage(this.path);
+    return;
   }
 
   exit() {
