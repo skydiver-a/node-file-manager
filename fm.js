@@ -1,7 +1,7 @@
 import { argv, exit, stdin, stdout } from 'process';
 import { basename, dirname, extname, isAbsolute, resolve } from 'path';
 import { fileURLToPath } from 'url';
-import { access, createReadStream, mkdir, readdir, stat, writeFile } from 'fs';
+import { access, createReadStream, mkdir, rename, readdir, stat, writeFile } from 'fs';
 import { lstat } from 'node:fs/promises';
 import { createInterface } from 'readline';
 
@@ -45,6 +45,7 @@ class FileManager {
         this.add(line.split(' ')[1]);
         break;
       case ('rn'):
+        this.rn(line.split(' ')[1], line.split(' ')[2]);
         break;
       case ('cp'):
         break;
@@ -161,6 +162,29 @@ class FileManager {
   add(newFileName) {
     const absPathToFile = this.path + '/' + newFileName;
     writeFile(absPathToFile, '', { flag: 'wx' }, (err) => {
+      if (err) throw err;
+    });
+    this.pathMessage(this.path);
+    return;
+  }
+
+  rn(pathToFile, newFileName) {
+    const absPathToFile = this.path + '/' + pathToFile;
+    const pathToRename = this.path + '/' + newFileName;
+    // if target file doesn't exist
+    access(absPathToFile, (err) => {
+      if (err) throw err;
+    });
+    // if new file name already exists
+    access(pathToRename, (err) => {
+      if (!err) {
+        stdout.write(`The file ${newFileName} already exists,\n`);
+        stdout.write(`please, try another name.\n`);
+        return;
+      };
+    });
+
+    rename(absPathToFile, pathToRename, (err) => {
       if (err) throw err;
     });
     this.pathMessage(this.path);
