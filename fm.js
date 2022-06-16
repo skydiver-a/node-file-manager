@@ -1,11 +1,14 @@
 import { argv, exit, stdin, stdout } from 'process';
-import { basename, dirname, extname, isAbsolute, resolve } from 'path';
+import { basename, dirname, extname,
+  isAbsolute, resolve } from 'path';
 import { fileURLToPath } from 'url';
 import { access, copyFile, createReadStream,
   mkdir, rename, readdir, stat, writeFile,
   unlink } from 'fs';
-import { arch, cpus, EOL, homedir, userInfo } from 'os';
+import { arch, cpus, EOL, homedir,
+  userInfo } from 'os';
 import { createInterface } from 'readline';
+import { createHash } from 'crypto';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const readLines = createInterface({
@@ -62,8 +65,10 @@ class FileManager {
         this.os(line.split(' ')[1]);
         break;
       case ('hash'):
+        this.hash(line.split(' ')[1]);
         break;
       case ('compress'):
+        this.compress();
         break;
       case ('decompress'):
         break;
@@ -272,6 +277,29 @@ class FileManager {
         stdout.write(`No such command, try again.\n`);
         break;
     }
+  }
+
+  hash(pathToFile) {
+    const absPathToFile = this.path + '/' + pathToFile;
+    const readStream = createReadStream(absPathToFile);
+    const hashSum = createHash('sha256').setEncoding('hex');
+
+    readStream.on('end', () => {
+      hashSum.end();
+      stdout.write(hashSum.read());
+      stdout.write('\n');
+    });
+
+    readStream.pipe(hashSum);
+    return;
+  }
+
+  compress() {
+    return;
+  }
+
+  decompress() {
+    return;
   }
 
   exit() {
