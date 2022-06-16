@@ -52,8 +52,10 @@ class FileManager {
         this.cp(line.split(' ')[1], line.split(' ')[2]);
         break;
       case ('mv'):
+        this.mv(line.split(' ')[1], line.split(' ')[2]);
         break;
       case ('rm'):
+        this.rm(line.split(' ')[1]);
         break;
       case ('os'):
         break;
@@ -211,6 +213,18 @@ class FileManager {
         return;
       });
     });
+  }
+
+  mv(pathToFile, pathToNewDir) {
+    // copy file to directory
+    this.cp(pathToFile, pathToNewDir);
+
+    // remove source file
+    this.rm(pathToFile);
+  }
+
+  rm(pathToFile) {
+
   }
 
   exit() {
