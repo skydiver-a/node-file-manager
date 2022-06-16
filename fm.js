@@ -3,8 +3,8 @@ import { basename, dirname, extname, isAbsolute, resolve } from 'path';
 import { fileURLToPath } from 'url';
 import { access, copyFile, createReadStream,
   mkdir, rename, readdir, stat, writeFile,
-  unlink } from 'node:fs';
-import { lstat } from 'node:fs/promises';
+  unlink } from 'fs';
+import { arch, cpus, EOL, homedir, userInfo } from 'os';
 import { createInterface } from 'readline';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -59,6 +59,7 @@ class FileManager {
         this.rm(line.split(' ')[1]);
         break;
       case ('os'):
+        this.os(line.split(' ')[1]);
         break;
       case ('hash'):
         break;
@@ -240,6 +241,37 @@ class FileManager {
     });
     this.pathMessage(this.path);
     return;
+  }
+
+  os(command) {
+    switch (command) {
+      case ('--EOL'):
+        stdout.write(JSON.stringify(EOL));
+        stdout.write('\n');
+        break;
+      case ('--cpus'):
+        stdout.write(`${cpus().length}`);
+        stdout.write('\n');
+        cpus().forEach(item => {
+          stdout.write(`${item.model}\n`);
+        });
+        break;
+      case('--homedir'):
+        stdout.write(homedir());
+        stdout.write('\n');
+        break;
+      case('--username'):
+        stdout.write(userInfo().username);
+        stdout.write('\n');
+        break;
+      case('--architecture'):
+        stdout.write(arch());
+        stdout.write('\n');
+        break;
+      default:
+        stdout.write(`No such command, try again.\n`);
+        break;
+    }
   }
 
   exit() {
