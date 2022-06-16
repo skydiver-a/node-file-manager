@@ -1,7 +1,7 @@
 import { argv, exit, stdin, stdout } from 'process';
 import { basename, dirname, extname, isAbsolute, resolve } from 'path';
 import { fileURLToPath } from 'url';
-import { access, createReadStream, mkdir, readdir, stat } from 'fs';
+import { access, createReadStream, mkdir, readdir, stat, writeFile } from 'fs';
 import { lstat } from 'node:fs/promises';
 import { createInterface } from 'readline';
 
@@ -42,6 +42,7 @@ class FileManager {
         this.cat(line.split(' ')[1]);
         break;
       case ('add'):
+        this.add(line.split(' ')[1]);
         break;
       case ('rn'):
         break;
@@ -153,6 +154,16 @@ class FileManager {
     .on('close', (error) => {
         if (error) throw error;
     });
+    this.pathMessage(this.path);
+    return;
+  }
+
+  add(newFileName) {
+    const absPathToFile = this.path + '/' + newFileName;
+    writeFile(absPathToFile, '', { flag: 'wx' }, (err) => {
+      if (err) throw err;
+    });
+    this.pathMessage(this.path);
     return;
   }
 
