@@ -1,7 +1,8 @@
 import { argv, exit, stdin, stdout } from 'process';
 import { basename, dirname, extname, isAbsolute, resolve } from 'path';
 import { fileURLToPath } from 'url';
-import { access, createReadStream, mkdir, rename, readdir, stat, writeFile } from 'fs';
+import { access, copyFile, createReadStream,
+  mkdir, rename, readdir, stat, writeFile } from 'node:fs';
 import { lstat } from 'node:fs/promises';
 import { createInterface } from 'readline';
 
@@ -48,6 +49,7 @@ class FileManager {
         this.rn(line.split(' ')[1], line.split(' ')[2]);
         break;
       case ('cp'):
+        this.cp(line.split(' ')[1], line.split(' ')[2]);
         break;
       case ('mv'):
         break;
@@ -189,6 +191,26 @@ class FileManager {
     });
     this.pathMessage(this.path);
     return;
+  }
+
+  cp(pathToFile, pathToNewDir) {
+    const sourceFile = this.path + '/' + `${pathToFile}`;
+    const targetFolder = this.path + '/' + pathToNewDir;
+    const targetFile = targetFolder + '/' + `${pathToFile}`;
+
+    // making directory
+    this.makeDirectory(targetFolder);
+    // reading source directory
+    readdir(this.path, {withFileTypes: true}, (err) => {
+      if (err) throw err;
+      // coping file from source to target
+      copyFile(sourceFile, targetFile, (err) => {
+        if (err) throw err;
+        this.path = targetFolder;
+        this.pathMessage(this.path);
+        return;
+      });
+    });
   }
 
   exit() {
