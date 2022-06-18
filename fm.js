@@ -2,13 +2,16 @@ import { argv, exit, stdin, stdout } from 'process';
 import { basename, dirname, extname,
   isAbsolute, resolve } from 'path';
 import { fileURLToPath } from 'url';
-import { access, copyFile, createReadStream,
-  mkdir, rename, readdir, stat, writeFile,
-  unlink } from 'fs';
+import { access, constants, copyFile,
+  createReadStream, createWriteStream,
+  mkdir, rename, readdir, stat,
+  writeFile, unlink } from 'fs';
 import { arch, cpus, EOL, homedir,
   userInfo } from 'os';
 import { createInterface } from 'readline';
 import { createHash } from 'crypto';
+import { createBrotliCompress,
+  createBrotliDecompress } from 'zlib';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const readLines = createInterface({
@@ -68,9 +71,10 @@ class FileManager {
         this.hash(line.split(' ')[1]);
         break;
       case ('compress'):
-        this.compress();
+        this.compress(line.split(' ')[1], line.split(' ')[2]);
         break;
       case ('decompress'):
+        this.decompress(line.split(' ')[1], line.split(' ')[2]);
         break;
       case ('exit'):
         this.exit();
@@ -294,11 +298,37 @@ class FileManager {
     return;
   }
 
-  compress() {
-    return;
+  async compress(pathToFile, pathToDestination = '') {
+    const absPathToFile = this.path + '/' + pathToFile;
+    // if file which must be compressed doesn't exist
+    access(absPathToFile, constants.F_OK, (err) => {
+      if (err) {
+        stdout.write(`File ${pathToFile} doesn't exist, \n`);
+        stdout.write(`please, try again.\n`);
+        return;
+      }
+    });
+    // if directory in which compressed file will be doesn't exist
+    const destination = this.path + '/' + pathToDestination;
+    this.makeDirectory(destination);
+    // create streams
+    return new Promise((resolve, reject) => {
+      const input = createReadStream(absPathToFile, 'utf-8');
+      const output = createWriteStream(destination + '/' + pathToFile + '.br');
+      const compress = createBrotliCompress();
+      // create pipe
+      input.pipe(compress).pipe(output);
+      output.on('finish', () => {
+        resolve();
+      });
+      output.on('error', err => reject(err));
+      this.path = destination;
+      this.pathMessage(this.path);
+    });
   }
 
-  decompress() {
+  decompress(pathToFile, pathToDestination) {
+
     return;
   }
 
