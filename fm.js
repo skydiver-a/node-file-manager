@@ -310,7 +310,19 @@ class FileManager {
     });
     // if directory in which compressed file will be doesn't exist
     const destination = this.path + '/' + pathToDestination;
-    this.makeDirectory(destination);
+    access(destination, err => {
+      if (err) {
+        mkdir(destination, err => {
+          if (err) throw err;
+          return this.promiseCompress(absPathToFile, destination, pathToFile);
+        });
+      } else {
+        return this.promiseCompress(absPathToFile, destination, pathToFile);
+      }
+    });
+  }
+
+  promiseCompress(absPathToFile, destination, pathToFile) {
     // create streams
     return new Promise((resolve, reject) => {
       const input = createReadStream(absPathToFile, 'utf-8');
@@ -327,9 +339,46 @@ class FileManager {
     });
   }
 
-  decompress(pathToFile, pathToDestination) {
+  async decompress(pathToFile, pathToDestination = '') {
+    const absPathToFile = this.path + '/' + pathToFile;
+    // if file which must be decompressed doesn't exist
+    access(absPathToFile, constants.F_OK, (err) => {
+      if (err) {
+        stdout.write(`File ${pathToFile} doesn't exist, \n`);
+        stdout.write(`please, try again.\n`);
+        return;
+      }
+    });
 
-    return;
+    // if directory in which decompressed file will be doesn't exist
+    const destination = this.path + '/' + pathToDestination;
+    access(destination, err => {
+      if (err) {
+        mkdir(destination, err => {
+          if (err) throw err;
+          return this.promiseDecompress(absPathToFile, destination, pathToFile);
+        });
+      } else {
+        return this.promiseDecompress(absPathToFile, destination, pathToFile);
+      }
+    });
+  }
+
+  promiseDecompress(absPathToFile, destination, pathToFile) {
+    // create streams
+    return new Promise((resolve, reject) => {
+      const input = createReadStream(absPathToFile);
+      const output = createWriteStream((destination + '/' + pathToFile).split('.br')[0]);
+      const decompress = createBrotliDecompress();
+      // create pipe
+      input.pipe(decompress).pipe(output);
+      output.on('finish', () => {
+        resolve();
+      });
+      output.on('error', err => reject(err));
+      this.path = destination;
+      this.pathMessage(this.path);
+    });
   }
 
   exit() {
